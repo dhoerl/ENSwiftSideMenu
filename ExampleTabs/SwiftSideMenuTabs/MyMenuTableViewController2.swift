@@ -39,7 +39,7 @@ class MyMenuTableViewController: UITableViewController, ENSideMenuControl {
 
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // Return the number of rows in the section.
-        return 4
+        return 2
     }
 
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -91,8 +91,6 @@ print("Screwed! \(indexPath.row) \(selectedMenuItem)")
             destViewController = mainStoryboard.instantiateViewControllerWithIdentifier("ViewController4") 
             break
         }
-print(destViewController)
-print(sideMenuController())
         sideMenuController()?.setContentViewController(destViewController)
     }
     

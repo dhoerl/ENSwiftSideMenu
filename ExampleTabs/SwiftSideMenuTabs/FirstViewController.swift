@@ -1,18 +1,36 @@
 //
-//  ViewController.swift
-//  SwiftSideMenu
+//  FirstViewController.swift
+//  SwiftSideMenuTabs
 //
-//  Created by Evgeny on 03.08.14.
-//  Copyright (c) 2014 Evgeny Nazarov. All rights reserved.
+//  Created by David Hoerl on 11/22/15.
+//  Copyright © 2015 dhoerl. All rights reserved.
 //
 
 import UIKit
+
+//class FirstViewController: UIViewController {
+//
+//	override func viewDidLoad() {
+//		super.viewDidLoad()
+//		// Do any additional setup after loading the view, typically from a nib.
+//	}
+//
+//	override func didReceiveMemoryWarning() {
+//		super.didReceiveMemoryWarning()
+//		// Dispose of any resources that can be recreated.
+//	}
+//
+//
+//}
 
 class ViewController: UIViewController, ENSideMenuDelegate, ENSideMenuControl {
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
+
+		navigationItem.title = "First"
+
         self.sideMenuController()?.sideMenu?.delegate = self
     }
 
@@ -20,7 +38,16 @@ class ViewController: UIViewController, ENSideMenuDelegate, ENSideMenuControl {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    
+
+	override func viewWillAppear(animated: Bool) {
+		super.viewWillAppear(animated)
+		print("Will Appear")
+	}
+	override func viewWillDisappear(animated: Bool) {
+		super.viewWillDisappear(animated)
+
+		//print("Will Disappear: coord = ", self.transitionCoordinator())
+	}
 
     @IBAction func toggleSideMenu(sender: AnyObject) {
         toggleSideMenuView()
