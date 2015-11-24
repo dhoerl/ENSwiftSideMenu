@@ -22,8 +22,7 @@ import UIKit
 }
 
 public enum ENSideMenuAnimation : Int {
-    case None
-    case Default
+    case None, Default
 }
 
 /**
@@ -39,8 +38,8 @@ enum ENSideMenuPosition : Int {
 //@objc
 protocol ENSideMenuControl {
 	func toggleSideMenuView ()
-	func hideSideMenuView (forceNoBounce: Bool)
-	func showSideMenuView (forceNoBounce: Bool)
+	func hideSideMenuView (forceNoBounce: Bool, duration: NSTimeInterval)
+	func showSideMenuView (forceNoBounce: Bool, duration: NSTimeInterval)
 	func isSideMenuOpen () -> Bool
 	func fixSideMenuSize()
 	func sideMenuController () -> ENSideMenuProtocol?
@@ -55,23 +54,22 @@ extension ENSideMenuControl {
     /**
     Hides the side menu view.
     */
-    func hideSideMenuView (forceNoBounce: Bool = false) {
-        sideMenuController()?.sideMenu?.hideSideMenu(forceNoBounce)
+    func hideSideMenuView (forceNoBounce: Bool = false, duration: NSTimeInterval = 0) {
+        sideMenuController()?.sideMenu?.hideSideMenu(forceNoBounce, duration: duration)
     }
     /**
     Shows the side menu view.
     */
-    func showSideMenuView (forceNoBounce: Bool = false) {
-        sideMenuController()?.sideMenu?.showSideMenu(forceNoBounce)
+    func showSideMenuView (forceNoBounce: Bool = false, duration: NSTimeInterval = 0) {
+        sideMenuController()?.sideMenu?.showSideMenu(forceNoBounce, duration: duration)
     }
     
     /**
     Returns a Boolean value indicating whether the side menu is showed.
-    
+
     :returns: BOOL value
     */
     func isSideMenuOpen () -> Bool {
-        // let sideMenuOpen = self.sideMenuController()?.sideMenu?.isMenuOpen
         guard let
 			sideMenuController = self.sideMenuController(),
 			sideMenu = sideMenuController.sideMenu
@@ -95,18 +93,16 @@ extension ENSideMenuControl {
 
     /**
     Returns a view controller containing a side menu
-    
+
     :returns: A `UIViewController`responding to `ENSideMenuProtocol` protocol
     */
-#if true
     func sideMenuController () -> ENSideMenuProtocol? {
 		guard
 			let viewController = self as? UIViewController,
 			var parentViewController = viewController.parentViewController
-		else { print("WTF") ; return topMostController() }
+		else { return topMostController() }
 
 		repeat {
-            if (parentViewController is ENSideMenuProtocol) { print("WOW!!!") }
             if let parentViewController = parentViewController as? ENSideMenuProtocol {
                 return parentViewController
 			}
@@ -119,25 +115,6 @@ extension ENSideMenuControl {
 			}
 		} while true
     }
-#else
-    func sideMenuController () -> ENSideMenuProtocol? {
-        var iteration : UIViewController? = self.parentViewController
-        if (iteration == nil) {
-            return topMostController()
-        }
-        repeat {
-            if (iteration is ENSideMenuProtocol) {
-                return iteration as? ENSideMenuProtocol
-            } else if (iteration?.parentViewController != nil && iteration?.parentViewController != iteration) {
-                iteration = iteration!.parentViewController
-            } else {
-                iteration = nil
-            }
-        } while (iteration != nil)
-        
-        return iteration as? ENSideMenuProtocol
-    }
-#endif
 
     private func topMostController () -> ENSideMenuProtocol? {
         guard var topController: UIViewController = UIApplication.sharedApplication().keyWindow?.rootViewController
@@ -159,7 +136,6 @@ extension ENSideMenuControl {
 }
 
 final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
-    /// The width of the side menu view. The default value is 160.
     var menuWidth : CGFloat = 160.0 {
         didSet {
             needUpdateApperance = true
@@ -172,7 +148,7 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
     /// The duration of the slide animation. Used only when `bouncingEnabled` is FALSE.
     var animationDuration: NSTimeInterval = 0.40
 	/// The elasticity of the slide animation
-	var elasticity: CGFloat = 0.15
+	var elasticity: CGFloat = 0.20
 	/// Magnitude of the "push"
 	var magnitude: CGFloat = 5
 
@@ -183,12 +159,13 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
     /// A Boolean value indicating whether the right swipe is enabled.
     var allowRightSwipe = true
     
-	private let sideMenuContainerView =  UIView()
     private(set) var menuViewController : UIViewController!
+    private(set) var isMenuOpen = false
+
+	private let sideMenuContainerView =  UIView()
     private var animator : UIDynamicAnimator
     private var sourceView : UIView!
     private var needUpdateApperance = false
-    private(set) var isMenuOpen = false
 
 
     /**
@@ -246,18 +223,11 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
         self.menuViewController.view.autoresizingMask =  [.FlexibleHeight, .FlexibleWidth]
         sideMenuContainerView.addSubview(self.menuViewController.view)
     }
-/*
-    public convenience init(sourceView: UIView, view: UIView, menuPosition: ENSideMenuPosition) {
-        self.init(sourceView: sourceView, menuPosition: menuPosition)
-        view.frame = sideMenuContainerView.bounds
-        view.autoresizingMask = [.FlexibleHeight, .FlexibleWidth]
-        sideMenuContainerView.addSubview(view)
-    }
-*/
+
     /**
     Updates the frame of the side menu view.
     */
-    func updateFrame() {
+    private func updateFrame() {
         let size = sourceView.frame.size
         let menuFrame = CGRectMake(
             (menuPosition == .Left) ?
@@ -271,8 +241,7 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
     }
 
     private func setupMenuView() {
-        // Configure side menu container
-        updateFrame()
+        updateFrame() // Configure side menu container
 
         sideMenuContainerView.backgroundColor = UIColor.clearColor()
         sideMenuContainerView.clipsToBounds = false
@@ -312,7 +281,7 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
             var boundaryPointX: CGFloat
             var boundaryPointY: CGFloat
             
-            if (menuPosition == .Left) {
+            if menuPosition == .Left {
                 // Left side menu
                 gravityDirectionX = (shouldOpen) ? 1 : -1
                 pushMagnitude = (shouldOpen) ? 20 : -20
@@ -347,80 +316,50 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
         }
         else {
             var destFrame :CGRect
-            if (menuPosition == .Left) {
+            if menuPosition == .Left {
                 destFrame = CGRectMake(shouldOpen ? -2.0 : -menuWidth, 0, menuWidth, size.height)
             }
             else {
-                destFrame = CGRectMake(shouldOpen ? size.width-menuWidth : size.width+2.0,
-                                        0,
-                                        menuWidth,
-                                        size.height)
+                destFrame = CGRectMake(shouldOpen ? size.width-menuWidth : size.width+2.0, 0, menuWidth, size.height)
             }
-NSLog("Animate \(animationDuration) ...")
 
-#if false
-			UIView.animateWithDuration(animationDuration, delay: 0, usingSpringWithDamping: 0.65, initialSpringVelocity: 2.0, options: [],
-                animations: { () -> Void in
-                    self.sideMenuContainerView.frame = destFrame
-                },
-                completion: { (Bool) -> Void in
-NSLog("...done")
-					if let delegate = self.delegate {
-						if (self.isMenuOpen) {
-							delegate.sideMenuDidOpen?()
-						} else {
-							delegate.sideMenuDidClose?()
-						}
-					}
-            })
-#else
             UIView.animateWithDuration(
                 duration > 0 ? duration : animationDuration,
                 animations: { () -> Void in
                     self.sideMenuContainerView.frame = destFrame
                 },
                 completion: { (Bool) -> Void in
-NSLog("...done")
-					if let delegate = self.delegate {
-						if (self.isMenuOpen) {
-							delegate.sideMenuDidOpen?()
-						} else {
-							delegate.sideMenuDidClose?()
-						}
+					if self.isMenuOpen {
+						self.delegate?.sideMenuDidOpen?()
+					} else {
+						self.sideMenuContainerView.hidden = true
+						self.delegate?.sideMenuDidClose?()
 					}
             })
-#endif
         }
 
-		if let delegate = delegate {
-			if (shouldOpen) {
-				delegate.sideMenuWillOpen?()
-			} else {
-				delegate.sideMenuWillClose?()
-			}
+		if shouldOpen {
+			delegate?.sideMenuWillOpen?()
+		} else {
+			delegate?.sideMenuWillClose?()
 		}
     }
 
 	// MAKR: - Gesture Recognizer 
 
     func gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer) -> Bool {
-        if gestureRecognizer is UISwipeGestureRecognizer {
-            let swipeGestureRecognizer = gestureRecognizer as! UISwipeGestureRecognizer
-            if !self.allowLeftSwipe {
-                if swipeGestureRecognizer.direction == .Left {
-                    return false
-                }
-            }
-            
-            if !self.allowRightSwipe {
-                if swipeGestureRecognizer.direction == .Right {
-                    return false
-                }
-            }
-        }
+        guard let swipeGestureRecognizer = gestureRecognizer as? UISwipeGestureRecognizer else { return false }
+
+		if !allowLeftSwipe && swipeGestureRecognizer.direction == .Left {
+			return false
+		}
+		if !allowRightSwipe && swipeGestureRecognizer.direction == .Right {
+			return false
+		}
 		if isMenuOpen == false {
 			sideMenuContainerView.hidden = false
 		}
+
         return true
     }
 
@@ -428,7 +367,7 @@ NSLog("...done")
         toggleMenuShouldOpen((self.menuPosition == .Right && gesture.direction == .Left) || (self.menuPosition == .Left && gesture.direction == .Right))
     }
 
-	// MARK: - Other
+	// MARK: - Other Private
 
     private func updateSideMenuApperanceIfNeeded () {
 		guard needUpdateApperance == true else { return }
@@ -440,12 +379,14 @@ NSLog("...done")
 
 		needUpdateApperance = false
     }
-    
+
+	// MARK: - Public
+
     /**
     Toggles the state of the side menu.
     */
     func toggleMenu () {
-        if (isMenuOpen) {
+        if isMenuOpen {
             toggleMenuShouldOpen(false)
         }
         else {
@@ -457,7 +398,7 @@ NSLog("...done")
     Shows the side menu if the menu is hidden.
     */
     func showSideMenu (forceNoBounce: Bool = false, duration: NSTimeInterval = 0) {
-        if (!isMenuOpen) {
+        if !isMenuOpen {
             toggleMenuShouldOpen(true, forceNoBounce: forceNoBounce, duration: duration)
         }
     }
@@ -465,7 +406,7 @@ NSLog("...done")
     Hides the side menu if the menu is showed.
     */
     func hideSideMenu (forceNoBounce: Bool = false, duration: NSTimeInterval = 0) {
-        if (isMenuOpen) {
+        if isMenuOpen {
             toggleMenuShouldOpen(false, forceNoBounce: forceNoBounce, duration: duration)
         }
     }
@@ -475,12 +416,14 @@ extension ENSideMenu: UIDynamicAnimatorDelegate {
 		if self.isMenuOpen {
 			self.delegate?.sideMenuDidOpen?()
 		} else {
-			self.delegate?.sideMenuDidClose?()
 			self.sideMenuContainerView.hidden = true
+			self.delegate?.sideMenuDidClose?()
 		}
     }
     
     func dynamicAnimatorWillResume(animator: UIDynamicAnimator) {
+#if DEBUG
         print("resume")
+#endif
     }
 }

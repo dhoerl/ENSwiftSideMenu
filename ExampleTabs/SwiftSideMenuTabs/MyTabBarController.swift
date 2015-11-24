@@ -41,8 +41,7 @@ final class MyTabBarController: UITabBarController, UITabBarControllerDelegate {
 			navCont = fromVC as? UINavigationController,
 			topView = navCont.topViewController as? ENSideMenuControl
 		{
-print("HIDE IT!")
-			topView.hideSideMenuView(true)
+			topView.hideSideMenuView(true, duration: NSTimeInterval(1.0))
 		}
 
 		print("2 HAHAHAHHAHA")
