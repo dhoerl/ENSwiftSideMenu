@@ -24,8 +24,6 @@ import UIKit
 //}
 
 class ViewController: UIViewController, ENSideMenuDelegate, ENSideMenuControl {
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
 

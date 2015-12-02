@@ -12,25 +12,25 @@ class ENSideMenuNavigationController: UINavigationController, ENSideMenuProtocol
     var sideMenu : ENSideMenu?
     var sideMenuAnimationType : ENSideMenuAnimation = .Default
 
+//    init( menuViewController: UIViewController, contentViewController: UIViewController?) {
+//        super.init(nibName: nil, bundle: nil)
+//        
+//        if let contentViewController = contentViewController{
+//            self.viewControllers = [contentViewController]
+//        }
+//
+//        sideMenu = ENSideMenu(sourceView: self.view, menuViewController: menuViewController, menuPosition:.Left)
+//        view.bringSubviewToFront(navigationBar)
+//    }
+
+//    required init?(coder aDecoder: NSCoder) {
+//        super.init(coder: aDecoder)
+//    }
 
     // MARK: - Life cycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
-    }
-    
-    init( menuViewController: UIViewController, contentViewController: UIViewController?) {
-        super.init(nibName: nil, bundle: nil)
-        
-        if let contentViewController = contentViewController{
-            self.viewControllers = [contentViewController]
-        }
-
-        sideMenu = ENSideMenu(sourceView: self.view, menuViewController: menuViewController, menuPosition:.Left)
-        view.bringSubviewToFront(navigationBar)
-    }
-
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
     }
     
     override func didReceiveMemoryWarning() {
@@ -47,7 +47,7 @@ print("setContentViewController")
         case .None:
             self.viewControllers = [contentViewController]
         default:
-            contentViewController.navigationItem.hidesBackButton = true
+            //contentViewController.navigationItem.hidesBackButton = true
             self.setViewControllers([contentViewController], animated: true)
         }        
     }

@@ -9,14 +9,27 @@
 import UIKit
 
 
-final class MyTabBarController: UITabBarController, UITabBarControllerDelegate {
+final class MyTabBarController: ENSideMenuTabBarController, UITabBarControllerDelegate {
 
     override func viewDidLoad() {
+		self.sideMenu = ENSideMenu(sourceView: self.view, menuViewController: MyMenuTableViewController())
+
         super.viewDidLoad()
 
 		delegate = self
-        // Do any additional setup after loading the view.
     }
+
+	override func viewWillAppear(animated: Bool) {
+		super.viewWillAppear(animated)
+
+		print("Tabber will \(selectedIndex)")
+
+		if let viewController = selectedViewController as? ENSideMenuProtocol {
+			if viewController.sideMenu == nil {
+
+			}
+		}
+	}
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
@@ -31,23 +44,34 @@ final class MyTabBarController: UITabBarController, UITabBarControllerDelegate {
 //	}
 
 	func tabBarController(tabBarController: UITabBarController, animationControllerForTransitionFromViewController fromVC: UIViewController, toViewController toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-
-		let foo = TransitioningObject()
+		let duration: NSTimeInterval = 1.0
+		let foo = TransitioningObject(duration: duration)
 		foo.fromViewC = fromVC
 		foo.toViewC = toVC
 
-//print("fromVC \(fromVC)")
+		var fromSideMenuViewC: ENSideMenuControl?
+		if let sideMenuControl = fromVC as? ENSideMenuControl {
+			fromSideMenuViewC = sideMenuControl
+		} else
 		if let
 			navCont = fromVC as? UINavigationController,
-			topView = navCont.topViewController as? ENSideMenuControl
+			sideMenuControl = navCont.topViewController as? ENSideMenuControl
 		{
-			topView.hideSideMenuView(true, duration: NSTimeInterval(1.0))
+			fromSideMenuViewC = sideMenuControl
+		}
+
+		if let fromSideMenuViewC = fromSideMenuViewC {
+			foo.fromSideMenuViewC = fromSideMenuViewC
+			fromSideMenuViewC.hideSideMenuView(true, duration: duration)
 		}
 
 		print("2 HAHAHAHHAHA")
 		return foo
 	}
-	
+
+	func tabBarController(tabBarController: UITabBarController, didSelectViewController viewController: UIViewController) {
+		print("DID SELECT TAB BAR")
+	}
     /*
     // MARK: - Navigation
 
@@ -61,16 +85,27 @@ final class MyTabBarController: UITabBarController, UITabBarControllerDelegate {
 }
 
 final class TransitioningObject: NSObject, UIViewControllerAnimatedTransitioning {
+	let duration: NSTimeInterval
 	var fromViewC: UIViewController!
 	var toViewC: UIViewController!
+	var fromSideMenuViewC: ENSideMenuControl?
+
+	init(duration: NSTimeInterval) {
+		self.duration = duration
+		super.init()
+	}
 
     func animateTransition(transitionContext: UIViewControllerContextTransitioning) {
-        // Get the "from" and "to" views
-        let fromView : UIView = transitionContext.viewForKey(UITransitionContextFromViewKey)!
-        let toView : UIView = transitionContext.viewForKey(UITransitionContextToViewKey)!
+		guard let
+				fromView = transitionContext.viewForKey(UITransitionContextFromViewKey),
+				toView = transitionContext.viewForKey(UITransitionContextToViewKey),
+				containerView = transitionContext.containerView()
+		else { fatalError("TransitionContext broken") }
 
-        transitionContext.containerView()!.addSubview(fromView)
-        transitionContext.containerView()!.addSubview(toView)
+        // Get the "from" and "to" views
+
+		containerView.addSubview(fromView)
+        containerView.addSubview(toView)
 
         //The "to" view with start "off screen" and slide left pushing the "from" view "off screen"
 
@@ -85,9 +120,8 @@ final class TransitioningObject: NSObject, UIViewControllerAnimatedTransitioning
             transitionContext.completeTransition(true)
         }
 #else
-print("Transition From View...")
 		// TransitionFlipFromLeft CrossDissolve
-		UIView.transitionFromView(fromView, toView: toView, duration: 1.0,
+		UIView.transitionFromView(fromView, toView: toView, duration: duration,
 		options: [.TransitionCrossDissolve, .ShowHideTransitionViews, .AllowAnimatedContent],
 		completion: { (Bool) -> Void in
             transitionContext.completeTransition(true)
@@ -98,4 +132,13 @@ print("Transition From View...")
     func transitionDuration(transitionContext: UIViewControllerContextTransitioning?) -> NSTimeInterval {
         return 1.0
     }
+
+	func animationEnded(transitionCompleted: Bool) {
+		guard let fromViewC = fromViewC as? ENSideMenuProtocol else { return }
+
+		if transitionCompleted {
+print("RELEASE SIDE MENU")
+			fromViewC.sideMenu = nil
+		}
+	}
 }

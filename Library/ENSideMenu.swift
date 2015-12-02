@@ -8,20 +8,91 @@
 
 import UIKit
 
-@objc protocol ENSideMenuDelegate {
-    optional func sideMenuWillOpen()
-    optional func sideMenuWillClose()
-    optional func sideMenuDidOpen()
-    optional func sideMenuDidClose()
-    optional func sideMenuShouldOpenSideMenu () -> Bool
+
+enum ENSideMenuOwners: Int {
+	//case MySelf=1, PresentingViewController, ParentViewController, NavigationController, SplitViewController, TabBarController, RootViewController
+	case MySelf=1, NavigationController, SplitViewController, TabBarController
+}
+// Set this to some other option set to select how we find the ENSideMenu
+var enSideMenuOwners: [ENSideMenuOwners] = [.NavigationController, .TabBarController]
+
+// MARK: - ENSideMenuDelegate
+
+// Conformed to by the controlling class as well as any UIViewController that wants to get messaged
+protocol ENSideMenuDelegate : class {
+    func sideMenuWillOpen()
+    func sideMenuWillClose()
+    func sideMenuDidOpen()
+    func sideMenuDidClose()
+
+	// Adopters should override the default function. ENSideMenuProtocol agent relays to appropriate UIViewController
+    func sideMenuShouldOpenSideMenu () -> Bool
+}
+extension ENSideMenuDelegate {
+    func sideMenuWillOpen() { }
+    func sideMenuWillClose() { }
+    func sideMenuDidOpen() { }
+    func sideMenuDidClose() { }
+
+    func sideMenuShouldOpenSideMenu () -> Bool { print("ASKED IF SHOULD"); return true }	// defaults to "works all the time"
 }
 
-@objc protocol ENSideMenuProtocol {
-    var sideMenu : ENSideMenu? { get }
+// The entity that knows how to change the current view controller
+//   Typically a container view: Navigation Controller, TabBar Controller, etc
+protocol ENSideMenuProtocol : class, ENSideMenuDelegate {
+    var sideMenu : ENSideMenu? { get set }	// set so we the one sideMenu instance can be moved from one controller to another
     func setContentViewController(contentViewController: UIViewController)
+
+	func visibleViewController() -> ENSideMenuDelegate?
+}
+extension ENSideMenuProtocol {
+	func visibleViewController() -> ENSideMenuDelegate? {
+		print("visibleViewController")
+
+		var viewController: UIViewController?
+		switch self {
+		case let vc as UINavigationController:
+			if vc.viewControllers.count == 1 {
+				viewController = vc.visibleViewController
+			}
+		case let vc as UISplitViewController:
+			if vc.viewControllers.count == 2 {
+				viewController = vc.viewControllers[1]	// detail controller
+			}
+		case let vc as UITabBarController:
+			viewController = vc.selectedViewController
+
+		case let vc as UIViewController:	// Must be last, all others would go into this case
+			viewController = vc
+
+		default:
+			fatalError("Missing Code")
+		}
+
+		if let viewController = viewController where viewController.presentedViewController == nil {
+			return viewController as? ENSideMenuDelegate
+		}
+		else {
+			return nil
+		}
+	}
+
+	func sideMenuShouldOpenSideMenu() -> Bool {
+print("ASK DELEGTATE if OK TO OPEN")
+		if let sideMenuDelegate = visibleViewController() {
+			return sideMenuDelegate.sideMenuShouldOpenSideMenu()
+		}
+		else {
+			return false
+		}
+	}
 }
 
-public enum ENSideMenuAnimation : Int {
+protocol ENSideMenuReference : class {
+    weak var sideMenu : ENSideMenu? { get set }
+}
+
+enum ENSideMenuAnimation : Int {
     case None, Default
 }
 
@@ -35,8 +106,10 @@ enum ENSideMenuPosition : Int {
     case Left, Right
 }
 
-//@objc
-protocol ENSideMenuControl {
+// MARK: - ENSideMenuControl
+
+protocol ENSideMenuControl : ENSideMenuDelegate {
+	// Action methods that cause menu changes
 	func toggleSideMenuView ()
 	func hideSideMenuView (forceNoBounce: Bool, duration: NSTimeInterval)
 	func showSideMenuView (forceNoBounce: Bool, duration: NSTimeInterval)
@@ -96,16 +169,62 @@ extension ENSideMenuControl {
 
     :returns: A `UIViewController`responding to `ENSideMenuProtocol` protocol
     */
+#if true
+// MySelf=1, PresentingViewController, NavigationController, TabBarController, SplitViewController, RootViewController
+	func sideMenuController () -> ENSideMenuProtocol? {
+		guard
+			let viewController = self as? UIViewController
+		else { return nil }
+
+//		if let info = enSideMenuControllerInfo(viewController) {
+//			return info.sideMenuController
+//		} else {
+//			return nil
+//		}
+
+		for option in enSideMenuOwners {
+			let vc: UIViewController?
+			switch option {
+			case .MySelf:
+				vc = viewController
+//			case .PresentingViewController:
+//				vc = viewController.presentingViewController
+//			case .ParentViewController:
+//				vc = viewController.parentViewController
+			case .NavigationController:
+				vc = viewController.navigationController
+			case .SplitViewController:
+				vc = viewController.splitViewController
+			case .TabBarController:
+				vc = viewController.tabBarController
+//			case .RootViewController:
+//				vc = UIApplication.sharedApplication().keyWindow?.rootViewController
+			}
+if let vc = vc {
+	print("testing...\(Mirror(reflecting: vc).subjectType)")
+}
+			if let vc = vc as? ENSideMenuProtocol {
+print("SUCCESS!!!")
+				return vc
+			}
+		}
+		return nil
+	}
+#else
     func sideMenuController () -> ENSideMenuProtocol? {
+		print("-----------")
 		guard
 			let viewController = self as? UIViewController,
 			var parentViewController = viewController.parentViewController
-		else { return topMostController() }
+		else { print("NO PARENT VC: me=\(Mirror(reflecting: self).subjectType)"); return topMostController() }
 
+		print("NO PARENT VC: me=\(Mirror(reflecting: self).subjectType)")
 		repeat {
             if let parentViewController = parentViewController as? ENSideMenuProtocol {
+				print("HAH - FOUND PARENT VC=\(Mirror(reflecting: parentViewController).subjectType)");
                 return parentViewController
 			}
+			print("HAH - LOOK FOR ANOTHER PARENT");
 			if let newParentViewController = parentViewController.parentViewController {
 				assert(newParentViewController != parentViewController)
 				parentViewController = newParentViewController
@@ -128,12 +247,17 @@ extension ENSideMenuControl {
 		}
 
         while let presentedViewController = topController.presentedViewController where presentedViewController is ENSideMenuProtocol {
+			print("TopMostController - Loop on VC=\(Mirror(reflecting: presentedViewController).subjectType)");
             topController = presentedViewController
         }
-        
+		print("TopMostController - FOUND PRESENTED VC=\(Mirror(reflecting: topController).subjectType)");
+
         return topController as? ENSideMenuProtocol
     }
+#endif
 }
+
+// MARK: - ENSideMenu
 
 final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
     var menuWidth : CGFloat = 160.0 {
@@ -142,8 +266,44 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
             updateFrame()
         }
     }
-    private var menuPosition = ENSideMenuPosition.Left
-    ///  A Boolean value indicating whether the bouncing effect is enabled. The default value is TRUE.
+	weak var sourceViewController : UIViewController? {
+		willSet {
+			sideMenuContainerView.removeFromSuperview()
+			if let view = sourceViewController?.view {
+				view.removeGestureRecognizer(menuPosition == .Left ? rightSwipeGestureRecognizer : leftSwipeGestureRecognizer)
+			}
+		}
+		didSet {
+			if let view = sourceViewController?.view {
+print("add gr to \(view)")
+				view.addSubview(sideMenuContainerView)
+				view.addGestureRecognizer(menuPosition == .Left ? rightSwipeGestureRecognizer : leftSwipeGestureRecognizer)
+				updateFrame()
+			}
+		}
+	}
+//	weak var sourceView : UIView? {
+//		willSet {
+//			sideMenuContainerView.removeFromSuperview()
+//			if let view = sourceView {
+//				view.removeGestureRecognizer(menuPosition == .Left ? rightSwipeGestureRecognizer : leftSwipeGestureRecognizer)
+//			}
+//		}
+//		didSet {
+//			if let view = sourceView {
+//print("add gr to \(view)")
+//				view.addSubview(sideMenuContainerView)
+//				view.addGestureRecognizer(menuPosition == .Left ? rightSwipeGestureRecognizer : leftSwipeGestureRecognizer)
+//				updateFrame()
+//			}
+//		}
+//	}
+
+	weak var sideMenuController : ENSideMenuProtocol?
+
+	private var menuPosition:ENSideMenuPosition // = .Left
+	private var blurStyle: UIBlurEffectStyle //  = .Light
+	///  A Boolean value indicating whether the bouncing effect is enabled. The default value is TRUE.
     var bouncingEnabled = true
     /// The duration of the slide animation. Used only when `bouncingEnabled` is FALSE.
     var animationDuration: NSTimeInterval = 0.40
@@ -153,7 +313,7 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
 	var magnitude: CGFloat = 5
 
     /// The delegate of the side menu
-    weak var delegate : ENSideMenuDelegate?
+//    weak var delegate : ENSideMenuDelegate?
     /// A Boolean value indicating whether the left swipe is enabled.
     var allowLeftSwipe = true
     /// A Boolean value indicating whether the right swipe is enabled.
@@ -164,9 +324,11 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
 
 	private let sideMenuContainerView =  UIView()
     private var animator : UIDynamicAnimator
-    private var sourceView : UIView!
     private var needUpdateApperance = false
+	private lazy var rightSwipeGestureRecognizer: UISwipeGestureRecognizer = { UISwipeGestureRecognizer(target: self, action: "handleGesture:")}()
+    private lazy var leftSwipeGestureRecognizer: UISwipeGestureRecognizer = { UISwipeGestureRecognizer(target: self, action: "handleGesture:")}()
 
+	// MARK: - Initializers
 
     /**
     Initializes an instance of a `ENSideMenu` object.
@@ -176,36 +338,34 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
     
     :returns: An initialized `ENSideMenu` object, added to the specified view.
     */
-    init(sourceView: UIView, menuPosition: ENSideMenuPosition) {
-        self.sourceView = sourceView
+    private init(sourceViewController: UIViewController, menuPosition: ENSideMenuPosition, blurStyle: UIBlurEffectStyle) { //  = .Left  = .Light
         self.menuPosition = menuPosition
+        self.blurStyle = blurStyle
+		self.sourceViewController = sourceViewController
 
-        animator = UIDynamicAnimator(referenceView:sourceView)
+        animator = UIDynamicAnimator(referenceView:sourceViewController.view)
 
 		super.init()
 
-        self.setupMenuView()
         animator.delegate = self
+		self.setupMenuView()
 
         // Add right swipe gesture recognizer
-        let rightSwipeGestureRecognizer = UISwipeGestureRecognizer(target: self, action: "handleGesture:")
         rightSwipeGestureRecognizer.direction =  UISwipeGestureRecognizerDirection.Right
         rightSwipeGestureRecognizer.delegate = self
         
         // Add left swipe gesture recognizer
-        let leftSwipeGestureRecognizer = UISwipeGestureRecognizer(target: self, action: "handleGesture:")
         leftSwipeGestureRecognizer.direction = UISwipeGestureRecognizerDirection.Left
         leftSwipeGestureRecognizer.delegate = self
         
-        if menuPosition == .Left {
-            sourceView.addGestureRecognizer(rightSwipeGestureRecognizer)
-            sideMenuContainerView.addGestureRecognizer(leftSwipeGestureRecognizer)
-        }
-        else {
-            sideMenuContainerView.addGestureRecognizer(rightSwipeGestureRecognizer)
-            sourceView.addGestureRecognizer(leftSwipeGestureRecognizer)
-        }
+		sideMenuContainerView.addGestureRecognizer(menuPosition == .Left ? leftSwipeGestureRecognizer : rightSwipeGestureRecognizer)
 		sideMenuContainerView.hidden = true
+
+		// forces the addition of the gesture recognizer
+
+		dispatch_async(dispatch_get_main_queue()) {
+			self.sourceViewController = sourceViewController // willSet/didSet not called during init
+		}
     }
     /**
     Initializes an instance of a `ENSideMenu` object.
@@ -216,18 +376,26 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
     
     :returns: An initialized `ENSideMenu` object, added to the specified view, containing the specified menu view controller.
     */
-    convenience init(sourceView: UIView, menuViewController: UIViewController, menuPosition: ENSideMenuPosition) {
-        self.init(sourceView: sourceView, menuPosition: menuPosition)
-        self.menuViewController = menuViewController
-        self.menuViewController.view.frame = sideMenuContainerView.bounds
-        self.menuViewController.view.autoresizingMask =  [.FlexibleHeight, .FlexibleWidth]
+    convenience init(sourceViewController: UIViewController, menuViewController menuVC: UIViewController, menuPosition: ENSideMenuPosition = .Left, blurStyle: UIBlurEffectStyle = .Light) {
+        self.init(sourceViewController: sourceViewController, menuPosition: menuPosition, blurStyle: blurStyle)
+
+        menuViewController = menuVC
+		if let menuViewController = menuViewController as? ENSideMenuReference {
+			menuViewController.sideMenu = self
+		}
+        menuViewController.view.frame = sideMenuContainerView.bounds
+        menuViewController.view.autoresizingMask =  [.FlexibleHeight, .FlexibleWidth]
         sideMenuContainerView.addSubview(self.menuViewController.view)
     }
+
+	// MARK: - Methods
 
     /**
     Updates the frame of the side menu view.
     */
     private func updateFrame() {
+		guard let sourceView = sourceViewController?.view else { return }
+
         let size = sourceView.frame.size
         let menuFrame = CGRectMake(
             (menuPosition == .Left) ?
@@ -241,6 +409,8 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
     }
 
     private func setupMenuView() {
+		//guard let sourceView = sourceView else { return }
+
         updateFrame() // Configure side menu container
 
         sideMenuContainerView.backgroundColor = UIColor.clearColor()
@@ -251,19 +421,21 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
         sideMenuContainerView.layer.shadowOpacity = 0.125
         sideMenuContainerView.layer.shadowPath = UIBezierPath(rect: sideMenuContainerView.bounds).CGPath
         
-        sourceView.addSubview(sideMenuContainerView)
+        //sourceView.addSubview(sideMenuContainerView) // done in setter for sourceView
         
 		// Add blur view
-		let visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .Light)) as UIVisualEffectView
+		let visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: blurStyle)) as UIVisualEffectView
 		visualEffectView.frame = sideMenuContainerView.bounds
 		visualEffectView.autoresizingMask = [.FlexibleHeight, .FlexibleWidth]
 		sideMenuContainerView.addSubview(visualEffectView)
     }
     
     private func toggleMenuShouldOpen (shouldOpen: Bool, forceNoBounce: Bool = false, duration: NSTimeInterval = 0) {
-        if shouldOpen && delegate?.sideMenuShouldOpenSideMenu?() == false {
+        if shouldOpen && sideMenuController?.sideMenuShouldOpenSideMenu() == false {
             return
         }
+
+		guard let sourceView = sourceViewController?.view else { return }
 
         updateSideMenuApperanceIfNeeded()
 
@@ -330,25 +502,29 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
                 },
                 completion: { (Bool) -> Void in
 					if self.isMenuOpen {
-						self.delegate?.sideMenuDidOpen?()
+						self.sideMenuController?.sideMenuDidOpen()
 					} else {
 						self.sideMenuContainerView.hidden = true
-						self.delegate?.sideMenuDidClose?()
+						self.sideMenuController?.sideMenuDidClose()
 					}
             })
         }
 
 		if shouldOpen {
-			delegate?.sideMenuWillOpen?()
+			sideMenuController?.sideMenuWillOpen()
 		} else {
-			delegate?.sideMenuWillClose?()
+			sideMenuController?.sideMenuWillClose()
 		}
     }
 
 	// MAKR: - Gesture Recognizer 
 
     func gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer) -> Bool {
-        guard let swipeGestureRecognizer = gestureRecognizer as? UISwipeGestureRecognizer else { return false }
+        guard let
+			swipeGestureRecognizer = gestureRecognizer as? UISwipeGestureRecognizer,
+			viewController = sourceViewController as? ENSideMenuProtocol where viewController.sideMenuShouldOpenSideMenu()
+			//info = enSideMenuControllerInfo(viewController) where info.showSideMenu
+		else { print("FUCKED!"); return false }
 
 		if !allowLeftSwipe && swipeGestureRecognizer.direction == .Left {
 			return false
@@ -412,12 +588,13 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
     }
 }
 extension ENSideMenu: UIDynamicAnimatorDelegate {
-    func dynamicAnimatorDidPause(animator: UIDynamicAnimator) {
+    func sideMenuController(animator: UIDynamicAnimator) {
 		if self.isMenuOpen {
-			self.delegate?.sideMenuDidOpen?()
-		} else {
+			self.sideMenuController?.sideMenuDidOpen()
+		}
+		else {
 			self.sideMenuContainerView.hidden = true
-			self.delegate?.sideMenuDidClose?()
+			self.sideMenuController?.sideMenuDidClose()
 		}
     }
     
@@ -427,3 +604,138 @@ extension ENSideMenu: UIDynamicAnimatorDelegate {
 #endif
     }
 }
+
+
+
+/*
+typealias SideMenuInfo = (sideMenuController: ENSideMenuProtocol, showSideMenu: Bool)
+
+#if true
+func enSideMenuControllerInfo(viewController: UIViewController) -> SideMenuInfo? {
+	print("enSideMenuControllerInfo: viewController==\(Mirror(reflecting: viewController).subjectType)")
+
+	for option in enSideMenuOwners {
+		let visibleConformsToSideMenuControl = viewController is ENSideMenuControl
+		var sideMenuController: UIViewController?
+		var showSideMenu: Bool = false
+
+print("-OPTION: \(option)")
+		switch option {
+		case .MySelf:
+			sideMenuController = viewController
+			showSideMenu = visibleConformsToSideMenuControl
+//		case .PresentingViewController:
+//			sideMenuController = viewController.presentingViewController
+//			showSideMenu = visibleConformsToSideMenuControl
+//		case .ParentViewController:
+//			sideMenuController = viewController.parentViewController
+//			showSideMenu = visibleConformsToSideMenuControl
+		case .NavigationController:
+			if let navController = viewController.navigationController {
+				sideMenuController = navController
+				showSideMenu = viewController === navController.visibleViewController
+			}
+		case .SplitViewController:
+			if let splitViewController = viewController.splitViewController {
+				sideMenuController = splitViewController
+				if splitViewController.viewControllers.count == 2 {
+					let detailViewController = splitViewController.viewControllers[1]
+					showSideMenu = detailViewController === viewController
+				}
+			}
+		case .TabBarController:
+			if let tabBarController = viewController.tabBarController {
+				sideMenuController = tabBarController
+				showSideMenu = viewController === tabBarController.selectedViewController
+			}
+//		case .RootViewController:
+//			if let rootViewController = UIApplication.sharedApplication().keyWindow?.rootViewController {
+//				showSideMenu = rootViewController === viewController
+//			}
+		}
+
+if let vc = sideMenuController {
+	print("testing...\(Mirror(reflecting: vc).subjectType)")
+}
+if let vc = sideMenuController?.presentedViewController {
+	print("Yikes! presented == \(Mirror(reflecting: vc).subjectType)")
+}
+		// Has to implement the protocol, AND not be presenting some other controller
+		if let
+			sideMenuController = sideMenuController,
+			vc = sideMenuController as? ENSideMenuProtocol
+		{
+print("SUCCESS!!!")
+			return (vc, showSideMenu && visibleConformsToSideMenuControl)
+		}
+	}
+	return nil
+}
+
+#else
+
+// Note: this gets called by the "controller - the thing that put in the gesture recognizer OR handles the action method of some button...
+func enSideMenuControllerInfo(viewController: UIViewController) -> SideMenuInfo? {
+	print("enSideMenuControllerInfo: viewController==\(Mirror(reflecting: viewController).subjectType)")
+
+	for option in enSideMenuOwners {
+		var sideMenuController: UIViewController?
+		var showSideMenu: Bool = false
+
+print("-OPTION: \(option)")
+		switch option {
+		case .MySelf:
+			sideMenuController = viewController
+			showSideMenu = visibleConformsToSideMenuControl
+		case .PresentingViewController:
+			sideMenuController = viewController.presentingViewController
+			showSideMenu = visibleConformsToSideMenuControl
+		case .ParentViewController:
+			sideMenuController = viewController.parentViewController
+			showSideMenu = visibleConformsToSideMenuControl
+		case .NavigationController:
+			if let navController = viewController as? UINavigationController {
+				sideMenuController = navController
+				showSideMenu = viewController === navController.visibleViewController
+			}
+		case .SplitViewController:
+			if let splitViewController = viewController.splitViewController {
+				sideMenuController = splitViewController
+				if splitViewController.viewControllers.count == 2 {
+					let detailViewController = splitViewController.viewControllers[1]
+					showSideMenu = detailViewController === viewController
+				}
+			}
+		case .TabBarController:
+			if let tabBarController = viewController.tabBarController {
+				sideMenuController = tabBarController
+				showSideMenu = viewController === tabBarController.selectedViewController
+			}
+		case .RootViewController:
+			if let rootViewController = UIApplication.sharedApplication().keyWindow?.rootViewController {
+				showSideMenu = rootViewController === viewController
+			}
+		}
+
+// 		let visibleConformsToSideMenuControl = viewController is ENSideMenuControl
+
+if let vc = sideMenuController {
+	print("testing...\(Mirror(reflecting: vc).subjectType)")
+}
+if let vc = sideMenuController?.presentedViewController {
+	print("Yikes! presented == \(Mirror(reflecting: vc).subjectType)")
+}
+		// Has to implement the protocol, AND not be presenting some other controller
+		if let
+			sideMenuController = sideMenuController,
+			vc = sideMenuController as? ENSideMenuProtocol
+		{
+print("SUCCESS!!!")
+			return (vc, showSideMenu && visibleConformsToSideMenuControl)
+		}
+	}
+	return nil
+}
+
+#endif
+*/

@@ -10,6 +10,7 @@ import UIKit
 
 class MyMenuTableViewController: UITableViewController, ENSideMenuControl {
     var selectedMenuItem : Int = 0
+
     override func viewDidLoad() {
         super.viewDidLoad()
         

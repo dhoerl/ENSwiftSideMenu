@@ -8,12 +8,12 @@
 
 import UIKit
 
-class ViewController: UIViewController, ENSideMenuDelegate, ENSideMenuControl {
+class ViewController: UIViewController, ENSideMenuControl {
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.sideMenuController()?.sideMenu?.delegate = self
+        //self.sideMenuController()?.sideMenu?.delegate = self
     }
 
     override func didReceiveMemoryWarning() {

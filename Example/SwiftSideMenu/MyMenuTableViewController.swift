@@ -8,8 +8,10 @@
 
 import UIKit
 
-class MyMenuTableViewController: UITableViewController, ENSideMenuControl {
-    var selectedMenuItem : Int = 0
+class MyMenuTableViewController: UITableViewController, ENSideMenuReference { //
+	weak var sideMenu: ENSideMenu?  // ENSideMenuReference
+    var selectedMenuItem = NSIndexPath(forRow: 0, inSection: 0)
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -22,7 +24,7 @@ class MyMenuTableViewController: UITableViewController, ENSideMenuControl {
         // Preserve selection between presentations
         self.clearsSelectionOnViewWillAppear = false
         
-        tableView.selectRowAtIndexPath(NSIndexPath(forRow: selectedMenuItem, inSection: 0), animated: false, scrollPosition: .Middle)
+        tableView.selectRowAtIndexPath(NSIndexPath(forRow: selectedMenuItem.row, inSection: selectedMenuItem.section), animated: false, scrollPosition: .Middle)
     }
 
     override func didReceiveMemoryWarning() {
@@ -72,7 +74,7 @@ print("Screwed! \(indexPath.row) \(selectedMenuItem)")
             return
         }
         
-        selectedMenuItem = indexPath.row
+        selectedMenuItem = indexPath
         
         //Present new view controller
         let mainStoryboard: UIStoryboard = UIStoryboard(name: "Main",bundle: nil)
@@ -91,9 +93,14 @@ print("Screwed! \(indexPath.row) \(selectedMenuItem)")
             destViewController = mainStoryboard.instantiateViewControllerWithIdentifier("ViewController4") 
             break
         }
-print(destViewController)
-print(sideMenuController())
-        sideMenuController()?.setContentViewController(destViewController)
+//print(destViewController)
+//print(sideMenuController())
+		if let
+			sideMenu = sideMenu,
+			sideMenuController = sideMenu.sideMenuController
+		{
+			sideMenuController.setContentViewController(destViewController)
+		}
     }
     
 

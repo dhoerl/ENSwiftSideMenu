@@ -43,7 +43,7 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="heM-ka-Qb7">
-                        <barButtonItem key="leftBarButtonItem" title="Toggle" id="XZZ-Nm-3uu">
+                        <barButtonItem key="leftBarButtonItem" title="☰" id="XZZ-Nm-3uu">
                             <connections>
                                 <action selector="toggleSideMenu:" destination="9pv-A4-QxB" id="oZ4-mJ-Da0"/>
                             </connections>

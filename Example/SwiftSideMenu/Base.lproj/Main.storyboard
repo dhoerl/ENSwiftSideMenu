@@ -112,7 +112,7 @@ Menu disabled</string>
         <!--ViewController 4-->
         <scene sceneID="7sn-3Y-MdV">
             <objects>
-                <viewController storyboardIdentifier="ViewController4" title="ViewController 4" id="6Ot-12-U3u" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ViewController4" title="ViewController 4" id="6Ot-12-U3u" customClass="ViewController" customModule="SwiftSideMenu" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="UaZ-jL-PH8"/>
                         <viewControllerLayoutGuide type="bottom" id="lz5-8o-lK3"/>

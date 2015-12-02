@@ -8,12 +8,12 @@
 
 import UIKit
 
-class ViewController2: UIViewController, ENSideMenuDelegate, ENSideMenuControl {
+class ViewController2: UIViewController, ENSideMenuControl {
 
     override func viewDidLoad() {
         super.viewDidLoad()
         //Move next line to viewWillAppear functon if you store your view controllers
-        self.sideMenuController()?.sideMenu?.delegate = self
+        // self.sideMenuController()?.sideMenu?.delegate = self
         // Do any additional setup after loading the view.
     }
 
@@ -38,13 +38,12 @@ class ViewController2: UIViewController, ENSideMenuDelegate, ENSideMenuControl {
     func sideMenuDidOpen() {
         print("sideMenuDidOpen")
     }
-    
-    /*
+
     func sideMenuShouldOpenSideMenu() -> Bool {
         print("sideMenuShouldOpenSideMenu")
         return true
     }
-    */
+
     /*
     // MARK: - Navigation
 
