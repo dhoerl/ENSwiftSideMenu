@@ -1,14 +1,24 @@
 ENSwiftSideMenu
 ===============
 
-A simple side menu for iOS 8 written in Swift. Using the UIDynamic framework, UIGestures and UIBlurEffect.
+A simple side menu for iOS 9 written in Swift. Using the UIDynamic framework, UIGestures and UIBlurEffect.
 
+## DHOERL Changes
+
+This project has been significanly changed. All UIKit class extensions were converted to use Swift protocols, with defaults methods 
+provided via extensions. Other changes:    
+* only permit the first view of a naviation controller as a menu controller
+* allow a tab view controller with optional navigation controllers to use the side menu instead of the tab bar
+* spaces to tabs
+* significatly edited to my style
+* now requires iOS 9
+- 
 ##Demo
 ![](https://raw.githubusercontent.com/evnaz/ENSwiftSideMenu/master/side_menu.gif)
 
 ##Requirements
-* Xcode 6.3
-* iOS 8 or higher
+* Xcode 7.1
+* iOS 9 or higher
 
 ##How to use
 1. Import `ENSideMenu.swift` and `ENSideMenuNavigationController.swift` to your project folder
