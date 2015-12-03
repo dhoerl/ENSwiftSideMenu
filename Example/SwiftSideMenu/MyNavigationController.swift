@@ -14,7 +14,7 @@ final class MyNavigationController: ENSideMenuNavigationController {
         
         sideMenu = ENSideMenu(sourceViewController: self, menuViewController: MyMenuTableViewController(), menuPosition:.Left)
 		if let sideMenu = sideMenu {
-			sideMenu.sideMenuController = self
+			//sideMenu.sideMenuController = self
 			//sideMenu.delegate = self //optional
 			sideMenu.menuWidth = 180.0 // optional, default is 160
 			//sideMenu?.bouncingEnabled = false

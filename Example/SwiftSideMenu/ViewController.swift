@@ -36,7 +36,7 @@ class ViewController: UIViewController, ENSideMenuControl {
     }
     
     func sideMenuShouldOpenSideMenu() -> Bool {
-        print("sideMenuShouldOpenSideMenu")
+        //print("sideMenuShouldOpenSideMenu")
         return true
     }
     

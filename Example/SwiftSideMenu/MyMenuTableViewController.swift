@@ -73,7 +73,8 @@ class MyMenuTableViewController: UITableViewController, ENSideMenuReference { //
 print("Screwed! \(indexPath.row) \(selectedMenuItem)")
             return
         }
-        
+
+
         selectedMenuItem = indexPath
         
         //Present new view controller
@@ -97,7 +98,7 @@ print("Screwed! \(indexPath.row) \(selectedMenuItem)")
 //print(sideMenuController())
 		if let
 			sideMenu = sideMenu,
-			sideMenuController = sideMenu.sideMenuController
+			sideMenuController = sideMenu.sourceViewController as? ENSideMenuProtocol
 		{
 			sideMenuController.setContentViewController(destViewController)
 		}
