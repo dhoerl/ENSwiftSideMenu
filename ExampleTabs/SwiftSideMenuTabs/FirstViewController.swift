@@ -23,13 +23,11 @@ import UIKit
 //
 //}
 
-class ViewController: UIViewController, ENSideMenuDelegate, ENSideMenuControl {
+class FirstViewController: UIViewController, ENSideMenuControl {
     override func viewDidLoad() {
         super.viewDidLoad()
 
 		navigationItem.title = "First"
-
-        self.sideMenuController()?.sideMenu?.delegate = self
     }
 
     override func didReceiveMemoryWarning() {

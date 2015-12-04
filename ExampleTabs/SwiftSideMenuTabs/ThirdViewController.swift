@@ -1,36 +1,21 @@
 //
-//  SecondViewController.swift
+//  ThirdViewController.swift
 //  SwiftSideMenuTabs
 //
-//  Created by David Hoerl on 11/22/15.
+//  Created by David Hoerl on 12/4/15.
 //  Copyright © 2015 dhoerl. All rights reserved.
 //
 
 import UIKit
 
-//class SecondViewController: UIViewController {
-//
-//	override func viewDidLoad() {
-//		super.viewDidLoad()
-//		// Do any additional setup after loading the view, typically from a nib.
-//	}
-//
-//	override func didReceiveMemoryWarning() {
-//		super.didReceiveMemoryWarning()
-//		// Dispose of any resources that can be recreated.
-//	}
-//
-//
-//}
-//
-
-class SecondViewController: UIViewController {
+class ThirdViewController: UIViewController, ENSideMenuControl {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        //Move next line to viewWillAppear functon if you store your view controllers
 
-		navigationItem.title = "Second"
+		navigationItem.title = "Third"
+
+        // Do any additional setup after loading the view.
     }
 
     override func didReceiveMemoryWarning() {
@@ -38,16 +23,6 @@ class SecondViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
-	override func viewWillAppear(animated: Bool) {
-		super.viewWillAppear(animated)
-		print("Will Appear")
-	}
-	override func viewWillDisappear(animated: Bool) {
-		super.viewWillDisappear(animated)
-
-		//print("Will Disappear: coord = ", self.transitionCoordinator())
-	}
-    
     // MARK: - ENSideMenuDelegate
     func sideMenuWillOpen() {
         print("sideMenuWillOpen")
@@ -68,6 +43,7 @@ class SecondViewController: UIViewController {
         print("sideMenuShouldOpenSideMenu")
         return true
     }
+    
 
     /*
     // MARK: - Navigation

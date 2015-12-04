@@ -9,68 +9,59 @@
 import UIKit
 
 
-final class MyTabBarController: ENSideMenuTabBarController, UITabBarControllerDelegate {
+final class MyTabBarController: ENSideMenuTabBarController {
+	private lazy var myMenuTableViewController: MyMenuTableViewController = { MyMenuTableViewController() }()
 
     override func viewDidLoad() {
-		self.sideMenu = ENSideMenu(sourceView: self.view, menuViewController: MyMenuTableViewController())
+print("HAHAHAH")
+		//sideMenu = ENSideMenu(sourceViewController: self, menuViewController: MyMenuTableViewController())
+        sideMenu = ENSideMenu(sourceViewController: self, menuViewController: myMenuTableViewController, menuPosition:.Left)
+		if let sideMenu = sideMenu {
+			//sideMenu.sideMenuController = self
+			//sideMenu.delegate = self //optional
+			sideMenu.menuWidth = 180.0 // optional, default is 160
+			//sideMenu?.bouncingEnabled = false
+			//sideMenu.containerViewIsSecond = true
+		}
+        
+        // make navigation bar showing over side menu
+        //view.bringSubviewToFront(tabBar)
 
         super.viewDidLoad()
 
 		delegate = self
+
+		for v in view.subviews {
+			print("SV: \(Mirror(reflecting: v).subjectType)", v.frame)
+		}
     }
 
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
 
 		print("Tabber will \(selectedIndex)")
+	}
+	override func viewDidAppear(animated: Bool) {
+		super.viewDidAppear(animated)
 
-		if let viewController = selectedViewController as? ENSideMenuProtocol {
-			if viewController.sideMenu == nil {
+		print("MyTabBarController \(selectedIndex)")
 
-			}
-		}
+//		var v: UIView! = selectedViewController?.view
+//		while v != nil {
+//			print("View: \(Mirror(reflecting: v).subjectType)")
+//			v = v.superview
+//		}
 	}
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    
-
-//	func tabBarController(tabBarController: UITabBarController, interactionControllerForAnimationController animationController: UIViewControllerAnimatedTransitioning) -> UIViewControllerInteractiveTransitioning? {
-//
-//		print("1 HAHAHAHHAHA")
-//		return TransitioningObject() as? UIViewControllerInteractiveTransitioning
-//	}
-
-	func tabBarController(tabBarController: UITabBarController, animationControllerForTransitionFromViewController fromVC: UIViewController, toViewController toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
-		let duration: NSTimeInterval = 1.0
-		let foo = TransitioningObject(duration: duration)
-		foo.fromViewC = fromVC
-		foo.toViewC = toVC
-
-		var fromSideMenuViewC: ENSideMenuControl?
-		if let sideMenuControl = fromVC as? ENSideMenuControl {
-			fromSideMenuViewC = sideMenuControl
-		} else
-		if let
-			navCont = fromVC as? UINavigationController,
-			sideMenuControl = navCont.topViewController as? ENSideMenuControl
-		{
-			fromSideMenuViewC = sideMenuControl
-		}
-
-		if let fromSideMenuViewC = fromSideMenuViewC {
-			foo.fromSideMenuViewC = fromSideMenuViewC
-			fromSideMenuViewC.hideSideMenuView(true, duration: duration)
-		}
-
-		print("2 HAHAHAHHAHA")
-		return foo
-	}
 
 	func tabBarController(tabBarController: UITabBarController, didSelectViewController viewController: UIViewController) {
-		print("DID SELECT TAB BAR")
+		//print("DID SELECT TAB BAR")
+		let index = NSIndexPath(forRow: selectedIndex, inSection: 0)
+		myMenuTableViewController.selectTableIndex(index)
 	}
     /*
     // MARK: - Navigation
@@ -82,63 +73,4 @@ final class MyTabBarController: ENSideMenuTabBarController, UITabBarControllerDe
     }
     */
 
-}
-
-final class TransitioningObject: NSObject, UIViewControllerAnimatedTransitioning {
-	let duration: NSTimeInterval
-	var fromViewC: UIViewController!
-	var toViewC: UIViewController!
-	var fromSideMenuViewC: ENSideMenuControl?
-
-	init(duration: NSTimeInterval) {
-		self.duration = duration
-		super.init()
-	}
-
-    func animateTransition(transitionContext: UIViewControllerContextTransitioning) {
-		guard let
-				fromView = transitionContext.viewForKey(UITransitionContextFromViewKey),
-				toView = transitionContext.viewForKey(UITransitionContextToViewKey),
-				containerView = transitionContext.containerView()
-		else { fatalError("TransitionContext broken") }
-
-        // Get the "from" and "to" views
-
-		containerView.addSubview(fromView)
-        containerView.addSubview(toView)
-
-        //The "to" view with start "off screen" and slide left pushing the "from" view "off screen"
-
-#if false
-        toView.frame = CGRectMake(toView.frame.width, 0, toView.frame.width, toView.frame.height)
-        let fromNewFrame = CGRectMake(-1 * fromView.frame.width, 0, fromView.frame.width, fromView.frame.height)
-        UIView.animateWithDuration(transitionDuration(transitionContext), animations: { () -> Void in
-            toView.frame = CGRectMake(0, 0, toView.frame.width, toView.frame.height)
-            fromView.frame = fromNewFrame
-        }) { (Bool) -> Void in
-            // update internal view - must always be called
-            transitionContext.completeTransition(true)
-        }
-#else
-		// TransitionFlipFromLeft CrossDissolve
-		UIView.transitionFromView(fromView, toView: toView, duration: duration,
-		options: [.TransitionCrossDissolve, .ShowHideTransitionViews, .AllowAnimatedContent],
-		completion: { (Bool) -> Void in
-            transitionContext.completeTransition(true)
-		})
-#endif
-    }
-
-    func transitionDuration(transitionContext: UIViewControllerContextTransitioning?) -> NSTimeInterval {
-        return 1.0
-    }
-
-	func animationEnded(transitionCompleted: Bool) {
-		guard let fromViewC = fromViewC as? ENSideMenuProtocol else { return }
-
-		if transitionCompleted {
-print("RELEASE SIDE MENU")
-			fromViewC.sideMenu = nil
-		}
-	}
 }

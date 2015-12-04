@@ -18,11 +18,15 @@ final class MyNavigationController: ENSideMenuNavigationController {
 			//sideMenu.delegate = self //optional
 			sideMenu.menuWidth = 180.0 // optional, default is 160
 			//sideMenu?.bouncingEnabled = false
+			sideMenu.containerViewIsSecond = true // default value, set to false to have the slide in menu on top of everything
 		}
         
         // make navigation bar showing over side menu
-        view.bringSubviewToFront(navigationBar)
     }
+
+	override func viewDidLayoutSubviews() {
+		print("NAV CONT viewDidLayoutSubviews")
+	}
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()

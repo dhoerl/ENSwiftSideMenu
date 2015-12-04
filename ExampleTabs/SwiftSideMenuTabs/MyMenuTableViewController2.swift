@@ -8,8 +8,9 @@
 
 import UIKit
 
-class MyMenuTableViewController: UITableViewController, ENSideMenuControl {
-    var selectedMenuItem : Int = 0
+final class MyMenuTableViewController: UITableViewController, ENSideMenuReference {
+	weak var sideMenu: ENSideMenu?  // ENSideMenuReference
+    var selectedMenuItem = NSIndexPath(forRow: 0, inSection: 0)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,13 +24,18 @@ class MyMenuTableViewController: UITableViewController, ENSideMenuControl {
         // Preserve selection between presentations
         self.clearsSelectionOnViewWillAppear = false
         
-        tableView.selectRowAtIndexPath(NSIndexPath(forRow: selectedMenuItem, inSection: 0), animated: false, scrollPosition: .Middle)
+        tableView.selectRowAtIndexPath(selectedMenuItem, animated: false, scrollPosition: .Middle)
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
+
+	func selectTableIndex(index: NSIndexPath)  {
+		selectedMenuItem = index
+		tableView.selectRowAtIndexPath(selectedMenuItem, animated: false, scrollPosition: .Middle)
+	}
 
     // MARK: - Table view data source
 
@@ -40,7 +46,7 @@ class MyMenuTableViewController: UITableViewController, ENSideMenuControl {
 
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // Return the number of rows in the section.
-        return 2
+        return 4
     }
 
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -66,6 +72,13 @@ class MyMenuTableViewController: UITableViewController, ENSideMenuControl {
     }
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+		guard let
+			sideMenu = sideMenu,
+			sideMenuController = sideMenu.sourceViewController as? ENSideMenuProtocol,
+			tabBarController = sideMenu.sourceViewController as? UITabBarController,
+			viewControllers = tabBarController.viewControllers where viewControllers.count > indexPath.row
+		else { print("FUCKED"); return }
+
         print("did select row: \(indexPath.row)")
         
         if (indexPath.row == selectedMenuItem) {
@@ -73,26 +86,14 @@ print("Screwed! \(indexPath.row) \(selectedMenuItem)")
             return
         }
         
-        selectedMenuItem = indexPath.row
+        selectedMenuItem = indexPath
         
         //Present new view controller
-        let mainStoryboard: UIStoryboard = UIStoryboard(name: "Main",bundle: nil)
-        var destViewController : UIViewController
-        switch (indexPath.row) {
-        case 0:
-            destViewController = mainStoryboard.instantiateViewControllerWithIdentifier("ViewController1") 
-            break
-        case 1:
-            destViewController = mainStoryboard.instantiateViewControllerWithIdentifier("ViewController2")
-            break
-        case 2:
-            destViewController = mainStoryboard.instantiateViewControllerWithIdentifier("ViewController3")
-            break
-        default:
-            destViewController = mainStoryboard.instantiateViewControllerWithIdentifier("ViewController4") 
-            break
-        }
-        sideMenuController()?.setContentViewController(destViewController)
+        //let mainStoryboard: UIStoryboard = UIStoryboard(name: "Main",bundle: nil)
+		//destViewController = mainStoryboard.instantiateViewControllerWithIdentifier("ViewController1")
+
+        let destViewController = viewControllers[indexPath.row]
+		sideMenuController.setContentViewController(destViewController)
     }
     
 

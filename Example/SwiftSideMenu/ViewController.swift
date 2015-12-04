@@ -16,6 +16,10 @@ class ViewController: UIViewController, ENSideMenuControl {
         //self.sideMenuController()?.sideMenu?.delegate = self
     }
 
+	override func viewWillLayoutSubviews() {
+		print("VC viewWillLayoutSubviews")
+	}
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.

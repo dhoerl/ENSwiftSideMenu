@@ -8,7 +8,7 @@
 
 import UIKit
 
-class MyMenuTableViewController: UITableViewController, ENSideMenuReference { //
+final class MyMenuTableViewController: UITableViewController, ENSideMenuReference { //
 	weak var sideMenu: ENSideMenu?  // ENSideMenuReference
     var selectedMenuItem = NSIndexPath(forRow: 0, inSection: 0)
 

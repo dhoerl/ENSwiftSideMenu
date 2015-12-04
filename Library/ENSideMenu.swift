@@ -3,7 +3,7 @@
 //  SwiftSideMenu
 //
 //  Created by Evgeny on 24.07.14.
-//  Copyright (c) 2014 Evgeny Nazarov. All rights reserved.
+//  Copyright (c) 2014-2015 Evgeny Nazarov. All rights reserved.
 //  Copyright (c) 2015 David Hoerl. All rights reserved.
 //
 
@@ -14,8 +14,18 @@ enum ENSideMenuOwners: Int {
 	//case MySelf=1, PresentingViewController, ParentViewController, NavigationController, SplitViewController, TabBarController, RootViewController
 	case NavigationController=1, SplitViewController, TabBarController, PagingController, ChildController, RootViewController
 }
+
 // Set this to some other option set to select how we find the ENSideMenu
-var enSideMenuOwners: [ENSideMenuOwners] = [.NavigationController, .TabBarController]
+//var enSideMenuOwners: [ENSideMenuOwners] = [.NavigationController, .TabBarController]
+
+protocol ENSideMenuReference : class {
+	weak var sideMenu : ENSideMenu? { get set }
+}
+
+protocol ENSideMenuContainer : class {
+	// UIPageViewController or ChildViewControllers need to override this
+	func currentViewController() -> UIViewController
+}
 
 // MARK: - ENSideMenuDelegate
 
@@ -25,36 +35,33 @@ protocol ENSideMenuDelegate : class {
 	func sideMenuWillClose()
 	func sideMenuDidOpen()
 	func sideMenuDidClose()
-
-	// Adopters should override the default function. ENSideMenuProtocol agent relays to appropriate UIViewController
-	func sideMenuShouldOpenSideMenu() -> Bool
 }
 extension ENSideMenuDelegate {
 	func sideMenuWillOpen() { }
 	func sideMenuWillClose() { }
 	func sideMenuDidOpen() { }
 	func sideMenuDidClose() { }
-
-	func sideMenuShouldOpenSideMenu() -> Bool { print("ASKED IF SHOULD"); return true }	// defaults to "works all the time"
 }
 
+// MARK: - ENSideMenuProtocol
+
 // The entity that knows how to change the current view controller
-// * typically a container view: Navigation Controller, TabBar Controller, etc
+// * typically a container view: Navigation Controller, TabBarController, PageViewController
 protocol ENSideMenuProtocol : class, ENSideMenuDelegate {
 	var sideMenu : ENSideMenu? { get set }	// set so we the one sideMenu instance can be moved from one controller to another
 	func setContentViewController(contentViewController: UIViewController)
 
-	func visibleViewController() -> ENSideMenuDelegate?	// UIPageViewController or childViewControllers need to override this
+	func controlViewController() -> ENSideMenuControl?
 }
 extension ENSideMenuProtocol {
-	func visibleViewController() -> ENSideMenuDelegate? {
+	func controlViewController() -> ENSideMenuControl? {
 		func drillDown(startViewController: UIViewController) -> UIViewController {
 			var viewController = startViewController
 
 			switch startViewController {
 			case let vc as UINavigationController:
-				if vc.viewControllers.count == 1, let vc1 = vc.visibleViewController {
-					viewController = vc1
+				if vc.viewControllers.count == 1 {
+					viewController = vc.viewControllers[0]
 				}
 			case let vc as UISplitViewController:
 				if vc.viewControllers.count == 2 {
@@ -64,8 +71,10 @@ extension ENSideMenuProtocol {
 				if let vc1 = vc.selectedViewController {
 					viewController = vc1
 				}
-			default:
-				break
+			default: // ContainerViewControllers and UIPageViewController
+				if let vc = startViewController as? ENSideMenuContainer {
+					viewController = vc.currentViewController()
+				}
 			}
 			return viewController
 		}
@@ -74,7 +83,7 @@ extension ENSideMenuProtocol {
 			var oldVC: UIViewController
 			repeat {
 				oldVC = returnViewController
-				if !(oldVC is ENSideMenuProtocol), let vc = oldVC as? ENSideMenuDelegate  {
+				if let vc = oldVC as? ENSideMenuControl  {
 					return oldVC.presentedViewController == nil ? vc : nil
 				}
 				returnViewController = drillDown(returnViewController)
@@ -84,8 +93,8 @@ extension ENSideMenuProtocol {
 	}
 
 	func sideMenuShouldOpenSideMenu() -> Bool {
-		if let sideMenuDelegate = visibleViewController() {
-			return sideMenuDelegate.sideMenuShouldOpenSideMenu()
+		if let sideMenuController = controlViewController() {
+			return sideMenuController.sideMenuShouldOpenSideMenu()
 		}
 		else {
 			return false
@@ -93,13 +102,10 @@ extension ENSideMenuProtocol {
 	}
 }
 
-protocol ENSideMenuReference : class {
-	weak var sideMenu : ENSideMenu? { get set }
-}
-
-enum ENSideMenuAnimation : Int {
-	case None, Default
-}
+// Really don't think this should be an option
+//enum ENSideMenuAnimation : Int {
+//	case None, Default
+//}
 
 /**
 The position of the side view on the screen.
@@ -119,10 +125,16 @@ protocol ENSideMenuControl : ENSideMenuDelegate {
 	func hideSideMenuView (forceNoBounce: Bool, duration: NSTimeInterval)
 	func showSideMenuView (forceNoBounce: Bool, duration: NSTimeInterval)
 	func isSideMenuOpen() -> Bool
-	func fixSideMenuSize()
 	func sideMenuController() -> ENSideMenuProtocol?
 
-	func pageViewController() -> UIViewController? // Override if you use a UIPageViewController so presented view can return it
+	// Must override - it needs to call sideMenu.updateFrame
+	func viewDidLayoutSubviews()
+
+	// Adopters should override the default function. ENSideMenuProtocol agent relays to appropriate UIViewController
+	func sideMenuShouldOpenSideMenu() -> Bool
+
+	// Override if this viewController is owned by a PageViewController or is a childViewController of another viewController
+	func pageViewController() -> UIViewController?
 }
 extension ENSideMenuControl {
 	/**
@@ -159,19 +171,6 @@ extension ENSideMenuControl {
 	}
 	
 	/**
-	 * You must call this method from viewDidLayoutSubviews in your content view controlers so it fixes size and position of the side menu when the screen
-	 * rotates.
-	 * A convenient way to do it might be creating a subclass of UIViewController that does precisely that and then subclassing your view controllers from it.
-	 */
-	func fixSideMenuSize() {
-		guard let viewController = self as? UIViewController else { return }
-
-		if let navController = viewController.navigationController as? ENSideMenuNavigationController {
-			navController.sideMenu?.updateFrame()
-		}
-	}
-
-	/**
 	Returns a view controller containing a side menu controller
 
 	:returns: A `UIViewController`responding to `ENSideMenuProtocol` protocol
@@ -198,7 +197,7 @@ extension ENSideMenuControl {
 			case .RootViewController:
 				vc = UIApplication.sharedApplication().keyWindow?.rootViewController
 			}
-//if let vc = vc { print("testing...\(Mirror(reflecting: vc).subjectType)") }
+			//if let vc = vc { print("testing...\(Mirror(reflecting: vc).subjectType)") }
 			if let vc = vc as? ENSideMenuProtocol {
 				return vc
 			}
@@ -206,19 +205,13 @@ extension ENSideMenuControl {
 		return nil
 	}
 
+	func sideMenuShouldOpenSideMenu() -> Bool { return true }	// defaults to "works all the time"
 	func pageViewController() -> UIViewController? { return nil }
 }
 
 // MARK: - ENSideMenu
 
 final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
-	var menuWidth : CGFloat = 160.0 {
-		didSet {
-			needUpdateApperance = true
-			updateSideMenuApperanceIfNeeded()
-			updateFrame()
-		}
-	}
 	weak var sourceViewController : UIViewController? {
 		willSet {
 			containerView.removeFromSuperview()
@@ -230,7 +223,11 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
 		}
 		didSet {
 			if let view = sourceViewController?.view {
-				view.addSubview(containerView)
+ 				view.addSubview(containerView)
+				if containerViewIsSecond {
+					let count = view.subviews.count
+					view.exchangeSubviewAtIndex(count-1, withSubviewAtIndex: count-2)
+				}
 				view.addGestureRecognizer(menuPosition == .Left ? rightSwipeGestureRecognizer : leftSwipeGestureRecognizer)
 				view.addGestureRecognizer(panGestureRecognizer)
 
@@ -241,9 +238,17 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
 			}
 		}
 	}
+	var menuWidth : CGFloat = 160.0 {
+		didSet {
+			needUpdateApperance = true
+			updateSideMenuApperanceIfNeeded()
+			updateFrame()
+		}
+	}
 
 	private var menuPosition:ENSideMenuPosition // = .Left
 	private var blurStyle: UIBlurEffectStyle //  = .Light
+
 	//  A Boolean value indicating whether the bouncing effect is enabled. The default value is TRUE.
 	var bouncingEnabled = true
 	// The duration of the slide animation. Used only when `bouncingEnabled` is FALSE.
@@ -252,6 +257,8 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
 	var elasticity: CGFloat = 0.20
 	// Magnitude of the "push"
 	var magnitude: CGFloat = 5
+	// If you want the view behind the Navigation Bar, or the Tab Bar
+	var containerViewIsSecond = true
 
 	// A Boolean value indicating whether the left swipe is enabled.
 	var allowLeftSwipe = true
@@ -342,7 +349,7 @@ final class ENSideMenu : NSObject, UIGestureRecognizerDelegate {
 	// MARK: - Methods
 
 	// Updates the frame of the side menu view.
-	private func updateFrame() {
+	func updateFrame() {
 		guard let sourceView = sourceViewController?.view else { return }
 
 		let size = sourceView.frame.size

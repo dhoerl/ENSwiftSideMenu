@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DE19B2161C11E1B80065C656 /* ThirdViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE19B2151C11E1B80065C656 /* ThirdViewController.swift */; };
+		DE19B2181C11E1D00065C656 /* ForthViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE19B2171C11E1D00065C656 /* ForthViewController.swift */; };
+		DE1B76A21C1222D400A3DAB7 /* MyNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE19B2131C11E0E90065C656 /* MyNavigationController.swift */; };
+		DE1B76A51C12488000A3DAB7 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = DE1B76A41C12488000A3DAB7 /* README.md */; };
 		DE326B011C024F05003A0975 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B001C024F05003A0975 /* AppDelegate.swift */; };
 		DE326B031C024F05003A0975 /* FirstViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B021C024F05003A0975 /* FirstViewController.swift */; };
 		DE326B051C024F05003A0975 /* SecondViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B041C024F05003A0975 /* SecondViewController.swift */; };
@@ -16,14 +20,17 @@
 		DE326B151C024FAA003A0975 /* side_menu.gif in Resources */ = {isa = PBXBuildFile; fileRef = DE326B141C024FAA003A0975 /* side_menu.gif */; };
 		DE326B171C024FD4003A0975 /* image.png in Resources */ = {isa = PBXBuildFile; fileRef = DE326B161C024FD4003A0975 /* image.png */; };
 		DE326B1B1C024FE5003A0975 /* ENSideMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B191C024FE5003A0975 /* ENSideMenu.swift */; };
-		DE326B1C1C024FE5003A0975 /* ENSideMenuNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B1A1C024FE5003A0975 /* ENSideMenuNavigationController.swift */; };
 		DE326B1F1C024FF6003A0975 /* MyMenuTableViewController2.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B1D1C024FF6003A0975 /* MyMenuTableViewController2.swift */; };
-		DE326B201C024FF6003A0975 /* MyNavigationController2.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B1E1C024FF6003A0975 /* MyNavigationController2.swift */; };
 		DE326B221C03DD2A003A0975 /* MyTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B211C03DD2A003A0975 /* MyTabBarController.swift */; };
 		DE326B241C064ED5003A0975 /* ENSideMenuTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE326B231C064ED5003A0975 /* ENSideMenuTabBarController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		DE19B2131C11E0E90065C656 /* MyNavigationController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyNavigationController.swift; sourceTree = "<group>"; };
+		DE19B2151C11E1B80065C656 /* ThirdViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThirdViewController.swift; sourceTree = "<group>"; };
+		DE19B2171C11E1D00065C656 /* ForthViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ForthViewController.swift; sourceTree = "<group>"; };
+		DE19B2191C11EB020065C656 /* ENSideMenuNavigationController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ENSideMenuNavigationController.swift; sourceTree = "<group>"; };
+		DE1B76A41C12488000A3DAB7 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		DE326AFD1C024F05003A0975 /* SwiftSideMenuTabs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftSideMenuTabs.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE326B001C024F05003A0975 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		DE326B021C024F05003A0975 /* FirstViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstViewController.swift; sourceTree = "<group>"; };
@@ -35,9 +42,7 @@
 		DE326B141C024FAA003A0975 /* side_menu.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; name = side_menu.gif; path = ../side_menu.gif; sourceTree = "<group>"; };
 		DE326B161C024FD4003A0975 /* image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = image.png; path = ../Example/SwiftSideMenu/image.png; sourceTree = "<group>"; };
 		DE326B191C024FE5003A0975 /* ENSideMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ENSideMenu.swift; sourceTree = "<group>"; };
-		DE326B1A1C024FE5003A0975 /* ENSideMenuNavigationController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ENSideMenuNavigationController.swift; sourceTree = "<group>"; };
 		DE326B1D1C024FF6003A0975 /* MyMenuTableViewController2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyMenuTableViewController2.swift; sourceTree = "<group>"; };
-		DE326B1E1C024FF6003A0975 /* MyNavigationController2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyNavigationController2.swift; sourceTree = "<group>"; };
 		DE326B211C03DD2A003A0975 /* MyTabBarController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyTabBarController.swift; sourceTree = "<group>"; };
 		DE326B231C064ED5003A0975 /* ENSideMenuTabBarController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ENSideMenuTabBarController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -56,6 +61,7 @@
 		DE326AF41C024F05003A0975 = {
 			isa = PBXGroup;
 			children = (
+				DE1B76A41C12488000A3DAB7 /* README.md */,
 				DE326B061C024F05003A0975 /* Main.storyboard */,
 				DE326B181C024FE5003A0975 /* Library */,
 				DE326B161C024FD4003A0975 /* image.png */,
@@ -77,14 +83,16 @@
 			isa = PBXGroup;
 			children = (
 				DE326B211C03DD2A003A0975 /* MyTabBarController.swift */,
-				DE326B1E1C024FF6003A0975 /* MyNavigationController2.swift */,
+				DE19B2131C11E0E90065C656 /* MyNavigationController.swift */,
 				DE326B1D1C024FF6003A0975 /* MyMenuTableViewController2.swift */,
 				DE326B001C024F05003A0975 /* AppDelegate.swift */,
 				DE326B021C024F05003A0975 /* FirstViewController.swift */,
 				DE326B041C024F05003A0975 /* SecondViewController.swift */,
-				DE326B091C024F05003A0975 /* Assets.xcassets */,
+				DE19B2151C11E1B80065C656 /* ThirdViewController.swift */,
+				DE19B2171C11E1D00065C656 /* ForthViewController.swift */,
 				DE326B0B1C024F05003A0975 /* LaunchScreen.storyboard */,
 				DE326B0E1C024F05003A0975 /* Info.plist */,
+				DE326B091C024F05003A0975 /* Assets.xcassets */,
 			);
 			path = SwiftSideMenuTabs;
 			sourceTree = "<group>";
@@ -93,7 +101,7 @@
 			isa = PBXGroup;
 			children = (
 				DE326B191C024FE5003A0975 /* ENSideMenu.swift */,
-				DE326B1A1C024FE5003A0975 /* ENSideMenuNavigationController.swift */,
+				DE19B2191C11EB020065C656 /* ENSideMenuNavigationController.swift */,
 				DE326B231C064ED5003A0975 /* ENSideMenuTabBarController.swift */,
 			);
 			name = Library;
@@ -173,14 +181,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DE326B201C024FF6003A0975 /* MyNavigationController2.swift in Sources */,
 				DE326B221C03DD2A003A0975 /* MyTabBarController.swift in Sources */,
+				DE19B2161C11E1B80065C656 /* ThirdViewController.swift in Sources */,
 				DE326B1F1C024FF6003A0975 /* MyMenuTableViewController2.swift in Sources */,
+				DE1B76A21C1222D400A3DAB7 /* MyNavigationController.swift in Sources */,
+				DE19B2181C11E1D00065C656 /* ForthViewController.swift in Sources */,
 				DE326B1B1C024FE5003A0975 /* ENSideMenu.swift in Sources */,
 				DE326B051C024F05003A0975 /* SecondViewController.swift in Sources */,
 				DE326B011C024F05003A0975 /* AppDelegate.swift in Sources */,
 				DE326B241C064ED5003A0975 /* ENSideMenuTabBarController.swift in Sources */,
-				DE326B1C1C024FE5003A0975 /* ENSideMenuNavigationController.swift in Sources */,
+				DE1B76A51C12488000A3DAB7 /* README.md in Sources */,
 				DE326B031C024F05003A0975 /* FirstViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
