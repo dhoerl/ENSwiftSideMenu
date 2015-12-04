@@ -13,7 +13,6 @@ var enSideMenuOwners: [ENSideMenuOwners] = [.NavigationController]
 
 class ENSideMenuNavigationController: UINavigationController, ENSideMenuProtocol {
 	var sideMenu : ENSideMenu?
-	var sideMenuAnimationType : ENSideMenuAnimation = .Default
 
 	// MARK: - Life cycle
 
@@ -30,14 +29,6 @@ class ENSideMenuNavigationController: UINavigationController, ENSideMenuProtocol
 	func setContentViewController(contentViewController: UIViewController) {
 print("setContentViewController")
 		self.sideMenu?.toggleMenu()
-
-		switch sideMenuAnimationType {
-		case .None:
-			self.viewControllers = [contentViewController]
-		default:
-			//contentViewController.navigationItem.hidesBackButton = true
-			self.setViewControllers([contentViewController], animated: true)
-		}		
 	}
 
 	override func viewDidLayoutSubviews() {
